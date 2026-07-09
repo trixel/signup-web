@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hasCobruCredentials } from "@/lib/cobru-auth";
+import { getMissingCobruCredentialsMessage, hasCobruCredentials } from "@/lib/cobru-auth";
 import { cobruFetch, getCobruApiUrl } from "@/lib/cobru";
 import type { CobruSubcategory } from "@/types/registration";
 
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   if (!hasCobruCredentials()) {
     return NextResponse.json(
-      { error: true, message: "Credenciales Cobru no configuradas" },
+      { error: true, message: getMissingCobruCredentialsMessage() },
       { status: 503 },
     );
   }

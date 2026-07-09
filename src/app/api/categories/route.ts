@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { hasCobruCredentials } from "@/lib/cobru-auth";
+import { getMissingCobruCredentialsMessage, hasCobruCredentials } from "@/lib/cobru-auth";
 import { cobruFetch, getCobruApiUrl } from "@/lib/cobru";
 import type { CobruCategory } from "@/types/registration";
 
@@ -13,8 +13,7 @@ export async function GET() {
     return NextResponse.json(
       {
         error: true,
-        message:
-          "Configura COBRU_API_KEY y COBRU_REFRESH_TOKEN en .env.local y reinicia el servidor.",
+        message: getMissingCobruCredentialsMessage(),
       },
       { status: 503 },
     );

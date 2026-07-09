@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useLanguage } from "@/i18n/LanguageProvider";
 
 interface FileUploadProps {
   label: string;
@@ -19,6 +20,7 @@ export function FileUpload({
   onChange,
   onClear,
 }: FileUploadProps) {
+  const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export function FileUpload({
       const data = await response.json();
 
       if (!response.ok || data.error) {
-        throw new Error(data.message || "Error al subir el archivo");
+        throw new Error(data.message || t("validation.uploadError"));
       }
 
       setFileName(file.name);
@@ -88,11 +90,11 @@ export function FileUpload({
         />
 
         {uploading ? (
-          <p className="text-sm text-neutral-600">Subiendo...</p>
+          <p className="text-sm text-neutral-600">{t("common.uploading")}</p>
         ) : value ? (
           <div className="flex items-center justify-between gap-3">
             <p className="truncate text-sm text-black">
-              {fileName || "Archivo cargado"}
+              {fileName || t("common.fileLoaded")}
             </p>
             <button
               type="button"
@@ -103,13 +105,11 @@ export function FileUpload({
               }}
               className="shrink-0 text-xs text-neutral-600 underline-offset-2 hover:text-black hover:underline"
             >
-              Cambiar
+              {t("common.change")}
             </button>
           </div>
         ) : (
-          <p className="text-sm text-neutral-600">
-            Seleccionar archivo · JPG, PNG, WEBP o PDF
-          </p>
+          <p className="text-sm text-neutral-600">{t("common.selectFile")}</p>
         )}
       </div>
 

@@ -1,3 +1,5 @@
+import type { ValidationErrorCode } from "@/types/registration";
+
 const NAME_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/;
 const MAX_NAME_LENGTH = 50;
 const INVISIBLE_CHARS = /[\u200B-\u200D\uFEFF\u00AD\u2060]/g;
@@ -67,40 +69,44 @@ function namesAreEquivalent(first: string, last: string): boolean {
 export function validateFullName(
   firstName: string,
   lastName: string,
-): string | null {
+): ValidationErrorCode | null {
   const first = prepareNameForCobru(firstName);
   const last = prepareNameForCobru(lastName);
   const firstWords = countWords(first);
   const lastWords = countWords(last);
 
   if (firstWords.length < 1) {
-    return "El nombre es requerido";
+    return "NAME_REQUIRED";
   }
 
   if (lastWords.length < 1) {
-    return "El apellido es requerido";
+    return "LAST_REQUIRED";
   }
 
   if (namesAreEquivalent(first, last)) {
-    return "El nombre y el apellido no pueden ser iguales ni repetirse entre ambos campos";
+    return "NAME_SAME";
   }
 
   for (const word of [...firstWords, ...lastWords]) {
     if (word.length < 2) {
-      return "Cada nombre y apellido debe tener al menos 2 caracteres";
+      return "WORD_MIN_LENGTH";
     }
     if (word.length > MAX_NAME_LENGTH) {
-      return `Cada nombre y apellido debe tener máximo ${MAX_NAME_LENGTH} caracteres`;
+      return "WORD_MAX_LENGTH";
     }
     if (!NAME_REGEX.test(word)) {
-      return "Usa solo letras en nombres y apellidos";
+      return "LETTERS_ONLY";
     }
     if (/^(.)\1{2,}$/i.test(word)) {
-      return "Ingresa un nombre real, sin caracteres repetidos";
+      return "REPEATED_CHARS";
     }
   }
 
   return null;
+}
+
+export function getMaxNameLength(): number {
+  return MAX_NAME_LENGTH;
 }
 
 export function formatCobruError(

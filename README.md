@@ -25,12 +25,34 @@ Abre [http://localhost:3000](http://localhost:3000).
 
 | Variable | Descripción | Default |
 |----------|-------------|---------|
+| `COBRU_API_KEY` | API key de Cobru | — |
+| `COBRU_REFRESH_TOKEN` | Refresh token de Cobru | — |
 | `COBRU_API_URL` | API sandbox Cobru | `https://dev.cobru.co` |
 | `COBRU_PROD_URL` | API producción (categorías) | `https://prod.cobru.co` |
 | `COBRU_BRAND` | Identificador whitelabel | `TRIXEL` |
 | `COBRU_UPLOAD_URL` | Endpoint de subida de archivos | `https://dev.cobru.co/upload/` |
 
 > Confirma con tu equipo Cobru el valor de `COBRU_BRAND`, los IDs de documentos y el endpoint de upload vigente antes de producción.
+
+## Deploy en Vercel
+
+En Vercel **no** se usa `.env.local`. Configura las variables en:
+
+**Project → Settings → Environment Variables**
+
+Variables obligatorias:
+
+- `COBRU_API_KEY`
+- `COBRU_REFRESH_TOKEN`
+
+Recomendadas para producción:
+
+- `COBRU_API_URL` → `https://prod.cobru.co` (o el ambiente que te indique Cobru)
+- `COBRU_PROD_URL` → `https://prod.cobru.co`
+- `COBRU_BRAND` → `TRIXEL`
+- `COBRU_UPLOAD_URL` → URL de upload de Cobru en producción
+
+Después de guardarlas, haz **Redeploy** del proyecto para que tomen efecto.
 
 ## Flujo de documentos
 

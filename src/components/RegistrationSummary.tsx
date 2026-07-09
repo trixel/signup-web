@@ -1,9 +1,8 @@
+"use client";
+
 import type { RegistrationFormData } from "@/types/registration";
-import {
-  DOCUMENT_SLOTS,
-  DOCUMENT_TYPES,
-  GENDER_OPTIONS,
-} from "@/types/registration";
+import { DOCUMENT_SLOTS } from "@/types/registration";
+import { useLanguage } from "@/i18n/LanguageProvider";
 
 interface RegistrationSummaryProps {
   form: RegistrationFormData;
@@ -15,7 +14,7 @@ function SummaryItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid grid-cols-[9rem_1fr] gap-3 border-b border-neutral-100 py-2.5 text-sm last:border-0">
       <dt className="text-neutral-500">{label}</dt>
-      <dd className="text-black">{value || "—"}</dd>
+      <dd className="text-black">{value}</dd>
     </div>
   );
 }
@@ -32,55 +31,72 @@ export function RegistrationSummary({
   categoryName,
   subcategoryName,
 }: RegistrationSummaryProps) {
+  const { t } = useLanguage();
   const isCompany = form.type_person === 2;
-  const documentType =
-    DOCUMENT_TYPES.find((t) => t.value === form.document_type)?.label ?? "—";
-  const gender =
-    GENDER_OPTIONS.find((g) => g.value === form.gender)?.label ?? "—";
+  const documentType = t(
+    `documentTypes.${form.document_type}` as "documentTypes.0",
+  );
+  const gender = t(`gender.${form.gender}` as "gender.1");
 
   return (
     <div className="border border-neutral-200 p-4">
-      <p className="mb-3 text-sm font-medium text-black">Resumen del registro</p>
+      <p className="mb-3 text-sm font-medium text-black">{t("summary.title")}</p>
       <dl>
         <SummaryItem
-          label="Tipo"
-          value={isCompany ? "Empresa" : "Persona"}
+          label={t("summary.type")}
+          value={isCompany ? t("summary.company") : t("summary.person")}
         />
         <SummaryItem
-          label={isCompany ? "Representante" : "Nombre completo"}
+          label={isCompany ? t("summary.representative") : t("summary.fullName")}
           value={`${form.first_name} ${form.last_name}`.trim()}
         />
-        <SummaryItem label="Tipo de documento" value={documentType} />
-        <SummaryItem label="Número de documento" value={form.document_number} />
+        <SummaryItem label={t("summary.documentType")} value={documentType} />
+        <SummaryItem
+          label={t("summary.documentNumber")}
+          value={form.document_number || t("common.dash")}
+        />
         {!isCompany && (
           <SummaryItem
-            label="Fecha de nacimiento"
-            value={formatDate(form.date_birth)}
+            label={t("summary.birthDate")}
+            value={formatDate(form.date_birth) || t("common.dash")}
           />
         )}
         <SummaryItem
-          label="Fecha de expedición"
-          value={formatDate(form.date_expiration)}
+          label={t("summary.issueDate")}
+          value={formatDate(form.date_expiration) || t("common.dash")}
         />
-        {!isCompany && <SummaryItem label="Género" value={gender} />}
+        {!isCompany && <SummaryItem label={t("summary.gender")} value={gender} />}
         <SummaryItem
-          label="Celular"
+          label={t("summary.phone")}
           value={`${form.country_code} ${form.phone}`.trim()}
         />
-        <SummaryItem label="Categoría" value={categoryName ?? "—"} />
-        <SummaryItem label="Subcategoría" value={subcategoryName ?? "—"} />
         <SummaryItem
-          label="Foto de perfil"
-          value={form.profile_picture ? "Cargada" : "Pendiente"}
+          label={t("summary.category")}
+          value={categoryName ?? t("common.dash")}
+        />
+        <SummaryItem
+          label={t("summary.subcategory")}
+          value={subcategoryName ?? t("common.dash")}
+        />
+        <SummaryItem
+          label={t("summary.profilePhoto")}
+          value={form.profile_picture ? t("common.uploaded") : t("common.pending")}
         />
         {DOCUMENT_SLOTS.map((slot) => (
           <SummaryItem
             key={slot.id}
-            label={slot.label}
-            value={form.documents.some((d) => d.id === slot.id) ? "Cargado" : "Pendiente"}
+            label={t(`documentSlots.${slot.key}.label`)}
+            value={
+              form.documents.some((d) => d.id === slot.id)
+                ? t("common.loaded")
+                : t("common.pending")
+            }
           />
         ))}
-        <SummaryItem label="Correo electrónico" value={form.email || "Por completar"} />
+        <SummaryItem
+          label={t("summary.email")}
+          value={form.email || t("common.toComplete")}
+        />
       </dl>
     </div>
   );

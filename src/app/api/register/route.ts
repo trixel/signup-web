@@ -12,7 +12,10 @@ export async function POST(request: NextRequest) {
     const nameError = validateFullName(first_name, last_name);
 
     if (nameError) {
-      return NextResponse.json({ error: true, message: nameError }, { status: 400 });
+      return NextResponse.json(
+        { error: true, message: nameError, code: nameError },
+        { status: 400 },
+      );
     }
 
     const phone = body.phone.replace(/\D/g, "");

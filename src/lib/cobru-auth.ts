@@ -16,6 +16,14 @@ export function hasCobruCredentials(): boolean {
   return Boolean(getCobruApiKey() && getCobruRefreshToken());
 }
 
+export function getMissingCobruCredentialsMessage(): string {
+  if (process.env.VERCEL) {
+    return "Faltan credenciales Cobru en Vercel. Ve a Project Settings → Environment Variables y agrega COBRU_API_KEY y COBRU_REFRESH_TOKEN, luego redeploy.";
+  }
+
+  return "Faltan credenciales Cobru. Configura COBRU_API_KEY y COBRU_REFRESH_TOKEN en .env.local y reinicia el servidor.";
+}
+
 export function clearCobruTokenCache(): void {
   cachedAccessToken = null;
   tokenExpiresAt = 0;
@@ -64,9 +72,7 @@ export async function getCobruAccessToken(forceRefresh = false): Promise<string>
   const refreshToken = getCobruRefreshToken();
 
   if (!apiKey || !refreshToken) {
-    throw new Error(
-      "Faltan credenciales Cobru. Configura COBRU_API_KEY y COBRU_REFRESH_TOKEN en .env.local",
-    );
+    throw new Error(getMissingCobruCredentialsMessage());
   }
 
   if (
