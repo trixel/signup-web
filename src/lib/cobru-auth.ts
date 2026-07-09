@@ -83,7 +83,7 @@ export async function getCobruAccessToken(forceRefresh = false): Promise<string>
     return cachedAccessToken;
   }
 
-  const baseUrl = process.env.COBRU_API_URL ?? "https://dev.cobru.co";
+  const baseUrl = (process.env.COBRU_API_URL ?? "https://dev.cobru.co").replace(/\/$/, "");
   const response = await fetch(`${baseUrl}/token/refresh/`, {
     method: "POST",
     headers: {

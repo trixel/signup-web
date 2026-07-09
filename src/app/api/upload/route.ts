@@ -74,7 +74,7 @@ async function uploadToCobru(
     if (!shouldRetryCobruAuth(response.status, data)) {
       if (response.status === 404) {
         throw new Error(
-          "El endpoint de subida de Cobru no existe. Quita COBRU_UPLOAD_URL en Vercel o usa /base/upload_file/.",
+          "El endpoint de subida de Cobru no existe. Verifica COBRU_API_URL en Vercel.",
         );
       }
 

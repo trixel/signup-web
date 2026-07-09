@@ -20,26 +20,12 @@ export function getCobruBrand(): string {
   return process.env.COBRU_BRAND ?? "TRIXEL";
 }
 
+const UPLOAD_FILE_PATH = "base/upload_file/";
+
+/** `{COBRU_API_URL}/base/upload_file/` */
 export function getUploadUrl(): string {
   const base = getCobruApiUrl().replace(/\/$/, "");
-  const defaultUrl = `${base}/base/upload_file/`;
-  const configured = process.env.COBRU_UPLOAD_URL?.trim();
-
-  if (!configured) return defaultUrl;
-
-  const normalized = configured.replace(/\/$/, "");
-
-  // Ruta legacy documentada antes — devuelve 404 en Cobru.
-  if (/\/upload$/i.test(normalized)) {
-    try {
-      const { origin } = new URL(normalized);
-      return `${origin}/base/upload_file/`;
-    } catch {
-      return defaultUrl;
-    }
-  }
-
-  return normalized.endsWith("/") ? normalized : `${normalized}/`;
+  return `${base}/${UPLOAD_FILE_PATH}`;
 }
 
 function getNameContext(body: RequestInit["body"]) {
