@@ -16,6 +16,9 @@ export interface CobruDocument {
 export interface RegistrationFormData {
   first_name: string;
   last_name: string;
+  company_name: string;
+  legal_document_type: string;
+  legal_document_number: string;
   email: string;
   password: string;
   phone: string;
@@ -53,6 +56,11 @@ export type ValidationErrorCode =
   | "WORD_MAX_LENGTH"
   | "LETTERS_ONLY"
   | "REPEATED_CHARS";
+
+export type CompanyValidationErrorCode =
+  | "COMPANY_NAME_REQUIRED"
+  | "COMPANY_NAME_MIN_LENGTH"
+  | "COMPANY_NAME_INVALID";
 
 export type DocumentSlotKey = "front" | "back" | "selfie";
 

@@ -10,6 +10,7 @@ import { useLanguage } from "@/i18n/LanguageProvider";
 import type {
   CobruCategory,
   CobruSubcategory,
+  CompanyValidationErrorCode,
   RegistrationFormData,
 } from "@/types/registration";
 import {
@@ -19,8 +20,11 @@ import {
 } from "@/types/registration";
 import {
   getMaxNameLength,
+  normalizeCompanyNameInput,
   normalizeNameInput,
+  prepareCompanyNameForCobru,
   prepareNameForCobru,
+  validateCompanyName,
   validateFullName,
 } from "@/lib/validation";
 
@@ -37,6 +41,9 @@ const STEP_KEYS = [
 const initialForm: RegistrationFormData = {
   first_name: "",
   last_name: "",
+  company_name: "",
+  legal_document_type: "0",
+  legal_document_number: "",
   email: "",
   password: "",
   phone: "",
@@ -96,6 +103,18 @@ export function RegistrationForm() {
     return t(`validation.${code}`);
   }
 
+  function translateCompanyError(code: CompanyValidationErrorCode | null) {
+    if (!code) return null;
+
+    const keyMap: Record<CompanyValidationErrorCode, string> = {
+      COMPANY_NAME_REQUIRED: "validation.companyNameRequired",
+      COMPANY_NAME_MIN_LENGTH: "validation.companyNameMinLength",
+      COMPANY_NAME_INVALID: "validation.companyNameInvalid",
+    };
+
+    return t(keyMap[code] as "validation.companyNameRequired");
+  }
+
   function startResendCooldown(type: "email" | "phone") {
     setResendCooldown((prev) => ({ ...prev, [type]: RESEND_COOLDOWN_SEC }));
   }
@@ -119,6 +138,7 @@ export function RegistrationForm() {
     updateForm({
       type_person: type,
       document_type: type === 2 ? "3" : "0",
+      legal_document_type: type === 2 ? "0" : form.legal_document_type,
     });
     setStep(1);
   }
@@ -181,12 +201,28 @@ export function RegistrationForm() {
         if (!form.type_person) return t("typeStep.selectType");
         return null;
       case 1: {
+        if (isCompany) {
+          const companyError = translateCompanyError(
+            validateCompanyName(form.company_name),
+          );
+          if (companyError) return companyError;
+          if (!form.document_number.trim()) return t("validation.documentRequired");
+        }
+
         const nameError = translateNameError(
           validateFullName(form.first_name, form.last_name),
         );
         if (nameError) return nameError;
-        if (!form.document_number.trim()) return t("validation.documentRequired");
-        if (form.type_person === 1 && !form.date_birth) {
+
+        if (!isCompany && !form.document_number.trim()) {
+          return t("validation.documentRequired");
+        }
+
+        if (isCompany && !form.legal_document_number.trim()) {
+          return t("validation.legalDocumentRequired");
+        }
+
+        if ((form.type_person === 1 || isCompany) && !form.date_birth) {
           return t("validation.birthRequired");
         }
         if (!form.date_expiration) return t("validation.issueRequired");
@@ -245,10 +281,14 @@ export function RegistrationForm() {
 
     const first_name = prepareNameForCobru(form.first_name);
     const last_name = prepareNameForCobru(form.last_name);
+    const company_name = prepareCompanyNameForCobru(form.company_name);
     const nameError = translateNameError(validateFullName(first_name, last_name));
+    const companyError = isCompany
+      ? translateCompanyError(validateCompanyName(company_name))
+      : null;
 
-    if (nameError) {
-      setError(nameError);
+    if (nameError || companyError) {
+      setError(nameError ?? companyError);
       setSubmitting(false);
       return;
     }
@@ -257,17 +297,22 @@ export function RegistrationForm() {
       const response = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, first_name, last_name }),
+        body: JSON.stringify({ ...form, first_name, last_name, company_name }),
       });
       const data = await response.json();
 
       if (!response.ok || data.error) {
         const code = typeof data.code === "string" ? data.code : null;
         if (code) {
-          const translated = translateNameError(
+          const translatedName = translateNameError(
             code as NonNullable<ReturnType<typeof validateFullName>>,
           );
-          if (translated) throw new Error(translated);
+          if (translatedName) throw new Error(translatedName);
+
+          const translatedCompany = translateCompanyError(
+            code as CompanyValidationErrorCode,
+          );
+          if (translatedCompany) throw new Error(translatedCompany);
         }
         throw new Error(
           typeof data.message === "string"
@@ -490,6 +535,52 @@ export function RegistrationForm() {
 
         {step === 1 && (
           <div className="grid gap-5 sm:grid-cols-2">
+            {isCompany && (
+              <>
+                <div className="sm:col-span-2 border-b border-neutral-200 pb-2">
+                  <h3 className="text-sm font-semibold text-black">
+                    {t("form.companySection")}
+                  </h3>
+                </div>
+                <div className="sm:col-span-2">
+                  <FormField
+                    label={t("form.companyName")}
+                    required
+                    hint={t("form.companyNameHint")}
+                  >
+                    <input
+                      className={inputClassName}
+                      value={form.company_name}
+                      onChange={(e) =>
+                        updateForm({ company_name: normalizeCompanyNameInput(e.target.value) })
+                      }
+                      onBlur={(e) =>
+                        updateForm({ company_name: prepareCompanyNameForCobru(e.target.value) })
+                      }
+                      placeholder="Trixel S.A.S."
+                      autoComplete="organization"
+                    />
+                  </FormField>
+                </div>
+                <div className="sm:col-span-2">
+                  <FormField label={t("form.nit")} required>
+                    <input
+                      className={inputClassName}
+                      value={form.document_number}
+                      onChange={(e) => updateForm({ document_number: e.target.value })}
+                      placeholder="900123456"
+                      inputMode="numeric"
+                    />
+                  </FormField>
+                </div>
+                <div className="sm:col-span-2 border-b border-neutral-200 pb-2 pt-2">
+                  <h3 className="text-sm font-semibold text-black">
+                    {t("form.legalRepresentativeSection")}
+                  </h3>
+                </div>
+              </>
+            )}
+
             <FormField
               label={isCompany ? t("form.firstNameLegal") : t("form.firstName")}
               required
@@ -518,71 +609,115 @@ export function RegistrationForm() {
                 autoComplete="family-name"
               />
             </FormField>
-            <FormField
-              label={
-                isCompany ? t("form.documentTypeCompany") : t("form.documentType")
-              }
-              required
-            >
-              <select
-                className={selectClassName}
-                value={form.document_type}
-                onChange={(e) => updateForm({ document_type: e.target.value })}
-              >
-                {(isCompany
-                  ? DOCUMENT_TYPE_VALUES.filter((v) => v === "3")
-                  : DOCUMENT_TYPE_VALUES.filter((v) => v !== "3")
-                ).map((value) => (
-                  <option key={value} value={value}>
-                    {t(`documentTypes.${value}`)}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <FormField
-              label={isCompany ? t("form.nit") : t("form.documentNumber")}
-              required
-            >
-              <input
-                className={inputClassName}
-                value={form.document_number}
-                onChange={(e) => updateForm({ document_number: e.target.value })}
-                placeholder="1234567890"
-              />
-            </FormField>
-            {!isCompany && (
-              <FormField label={t("form.birthDate")} required>
-                <input
-                  type="date"
-                  className={inputClassName}
-                  value={form.date_birth}
-                  onChange={(e) => updateForm({ date_birth: e.target.value })}
-                />
-              </FormField>
+
+            {isCompany ? (
+              <>
+                <FormField label={t("form.legalDocumentType")} required>
+                  <select
+                    className={selectClassName}
+                    value={form.legal_document_type}
+                    onChange={(e) => updateForm({ legal_document_type: e.target.value })}
+                  >
+                    {DOCUMENT_TYPE_VALUES.filter((v) => v !== "3").map((value) => (
+                      <option key={value} value={value}>
+                        {t(`documentTypes.${value}`)}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label={t("form.legalDocumentNumber")} required>
+                  <input
+                    className={inputClassName}
+                    value={form.legal_document_number}
+                    onChange={(e) => updateForm({ legal_document_number: e.target.value })}
+                    placeholder="1234567890"
+                  />
+                </FormField>
+                <FormField label={t("form.legalBirthDate")} required>
+                  <input
+                    type="date"
+                    className={inputClassName}
+                    value={form.date_birth}
+                    onChange={(e) => updateForm({ date_birth: e.target.value })}
+                  />
+                </FormField>
+                <FormField label={t("form.legalIssueDate")} required>
+                  <input
+                    type="date"
+                    className={inputClassName}
+                    value={form.date_expiration}
+                    onChange={(e) => updateForm({ date_expiration: e.target.value })}
+                  />
+                </FormField>
+                <FormField label={t("form.legalGender")} required>
+                  <select
+                    className={selectClassName}
+                    value={form.gender}
+                    onChange={(e) => updateForm({ gender: parseInt(e.target.value, 10) })}
+                  >
+                    {GENDER_VALUES.map((value) => (
+                      <option key={value} value={value}>
+                        {t(`gender.${value}`)}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </>
+            ) : (
+              <>
+                <FormField label={t("form.documentType")} required>
+                  <select
+                    className={selectClassName}
+                    value={form.document_type}
+                    onChange={(e) => updateForm({ document_type: e.target.value })}
+                  >
+                    {DOCUMENT_TYPE_VALUES.filter((v) => v !== "3").map((value) => (
+                      <option key={value} value={value}>
+                        {t(`documentTypes.${value}`)}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+                <FormField label={t("form.documentNumber")} required>
+                  <input
+                    className={inputClassName}
+                    value={form.document_number}
+                    onChange={(e) => updateForm({ document_number: e.target.value })}
+                    placeholder="1234567890"
+                  />
+                </FormField>
+                <FormField label={t("form.birthDate")} required>
+                  <input
+                    type="date"
+                    className={inputClassName}
+                    value={form.date_birth}
+                    onChange={(e) => updateForm({ date_birth: e.target.value })}
+                  />
+                </FormField>
+                <FormField label={t("form.issueDate")} required>
+                  <input
+                    type="date"
+                    className={inputClassName}
+                    value={form.date_expiration}
+                    onChange={(e) => updateForm({ date_expiration: e.target.value })}
+                  />
+                </FormField>
+                <FormField label={t("form.gender")} required>
+                  <select
+                    className={selectClassName}
+                    value={form.gender}
+                    onChange={(e) => updateForm({ gender: parseInt(e.target.value, 10) })}
+                  >
+                    {GENDER_VALUES.map((value) => (
+                      <option key={value} value={value}>
+                        {t(`gender.${value}`)}
+                      </option>
+                    ))}
+                  </select>
+                </FormField>
+              </>
             )}
-            <FormField label={t("form.issueDate")} required>
-              <input
-                type="date"
-                className={inputClassName}
-                value={form.date_expiration}
-                onChange={(e) => updateForm({ date_expiration: e.target.value })}
-              />
-            </FormField>
-            {!isCompany && (
-              <FormField label={t("form.gender")} required>
-                <select
-                  className={selectClassName}
-                  value={form.gender}
-                  onChange={(e) => updateForm({ gender: parseInt(e.target.value, 10) })}
-                >
-                  {GENDER_VALUES.map((value) => (
-                    <option key={value} value={value}>
-                      {t(`gender.${value}`)}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            )}
+
             <div className="sm:col-span-2">
               <FormField label={t("form.phone")} required hint={t("form.phoneHint")}>
                 <div className="flex min-w-0 gap-2">

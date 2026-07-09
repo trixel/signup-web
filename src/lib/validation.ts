@@ -1,4 +1,7 @@
-import type { ValidationErrorCode } from "@/types/registration";
+import type {
+  CompanyValidationErrorCode,
+  ValidationErrorCode,
+} from "@/types/registration";
 
 const NAME_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s'-]+$/;
 const MAX_NAME_LENGTH = 50;
@@ -107,6 +110,37 @@ export function validateFullName(
 
 export function getMaxNameLength(): number {
   return MAX_NAME_LENGTH;
+}
+
+const COMPANY_NAME_REGEX = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ0-9\s&.\-'()]+$/;
+
+export function normalizeCompanyNameInput(value: string): string {
+  return value
+    .normalize("NFC")
+    .replace(INVISIBLE_CHARS, "")
+    .replace(/\s{2,}/g, " ");
+}
+
+export function prepareCompanyNameForCobru(value: string): string {
+  return sanitizeName(normalizeCompanyNameInput(value));
+}
+
+export function validateCompanyName(value: string): CompanyValidationErrorCode | null {
+  const name = prepareCompanyNameForCobru(value);
+
+  if (!name) {
+    return "COMPANY_NAME_REQUIRED";
+  }
+
+  if (name.length < 2) {
+    return "COMPANY_NAME_MIN_LENGTH";
+  }
+
+  if (!COMPANY_NAME_REGEX.test(name)) {
+    return "COMPANY_NAME_INVALID";
+  }
+
+  return null;
 }
 
 export function formatCobruError(

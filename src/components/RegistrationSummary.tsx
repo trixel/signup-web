@@ -34,7 +34,7 @@ export function RegistrationSummary({
   const { t } = useLanguage();
   const isCompany = form.type_person === 2;
   const documentType = t(
-    `documentTypes.${form.document_type}` as "documentTypes.0",
+    `documentTypes.${isCompany ? form.legal_document_type : form.document_type}` as "documentTypes.0",
   );
   const gender = t(`gender.${form.gender}` as "gender.1");
 
@@ -46,26 +46,52 @@ export function RegistrationSummary({
           label={t("summary.type")}
           value={isCompany ? t("summary.company") : t("summary.person")}
         />
-        <SummaryItem
-          label={isCompany ? t("summary.representative") : t("summary.fullName")}
-          value={`${form.first_name} ${form.last_name}`.trim()}
-        />
-        <SummaryItem label={t("summary.documentType")} value={documentType} />
-        <SummaryItem
-          label={t("summary.documentNumber")}
-          value={form.document_number || t("common.dash")}
-        />
-        {!isCompany && (
-          <SummaryItem
-            label={t("summary.birthDate")}
-            value={formatDate(form.date_birth) || t("common.dash")}
-          />
+
+        {isCompany && (
+          <>
+            <SummaryItem
+              label={t("summary.companyName")}
+              value={form.company_name || t("common.dash")}
+            />
+            <SummaryItem
+              label={t("summary.nit")}
+              value={form.document_number || t("common.dash")}
+            />
+            <SummaryItem
+              label={t("summary.representative")}
+              value={`${form.first_name} ${form.last_name}`.trim()}
+            />
+            <SummaryItem label={t("summary.legalDocumentType")} value={documentType} />
+            <SummaryItem
+              label={t("summary.legalDocumentNumber")}
+              value={form.legal_document_number || t("common.dash")}
+            />
+          </>
         )}
+
+        {!isCompany && (
+          <>
+            <SummaryItem
+              label={t("summary.fullName")}
+              value={`${form.first_name} ${form.last_name}`.trim()}
+            />
+            <SummaryItem label={t("summary.documentType")} value={documentType} />
+            <SummaryItem
+              label={t("summary.documentNumber")}
+              value={form.document_number || t("common.dash")}
+            />
+          </>
+        )}
+
+        <SummaryItem
+          label={t("summary.birthDate")}
+          value={formatDate(form.date_birth) || t("common.dash")}
+        />
         <SummaryItem
           label={t("summary.issueDate")}
           value={formatDate(form.date_expiration) || t("common.dash")}
         />
-        {!isCompany && <SummaryItem label={t("summary.gender")} value={gender} />}
+        <SummaryItem label={t("summary.gender")} value={gender} />
         <SummaryItem
           label={t("summary.phone")}
           value={`${form.country_code} ${form.phone}`.trim()}

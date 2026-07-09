@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cobruFetch, getCobruApiUrl, getCobruBrand } from "@/lib/cobru";
-import { prepareNameForCobru, validateFullName } from "@/lib/validation";
+import {
+  prepareCompanyNameForCobru,
+  prepareNameForCobru,
+  validateCompanyName,
+  validateFullName,
+} from "@/lib/validation";
 import type { RegistrationFormData, RegistrationResponse } from "@/types/registration";
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as RegistrationFormData;
+    const isCompany = body.type_person === 2;
 
     const first_name = prepareNameForCobru(body.first_name);
     const last_name = prepareNameForCobru(body.last_name);
@@ -16,6 +22,18 @@ export async function POST(request: NextRequest) {
         { error: true, message: nameError, code: nameError },
         { status: 400 },
       );
+    }
+
+    if (isCompany) {
+      const company_name = prepareCompanyNameForCobru(body.company_name);
+      const companyError = validateCompanyName(company_name);
+
+      if (companyError) {
+        return NextResponse.json(
+          { error: true, message: companyError, code: companyError },
+          { status: 400 },
+        );
+      }
     }
 
     const phone = body.phone.replace(/\D/g, "");
@@ -31,7 +49,6 @@ export async function POST(request: NextRequest) {
       document_type: body.document_type,
       document_number: body.document_number.trim(),
       country_code: body.country_code,
-      gender: body.gender,
       type_person: body.type_person,
       date_expiration: body.date_expiration,
       subcategory: body.subcategory,
@@ -42,6 +59,21 @@ export async function POST(request: NextRequest) {
       referal_code: body.referal_code || "",
       brand: getCobruBrand(),
     };
+
+    if (isCompany) {
+      const company_name = prepareCompanyNameForCobru(body.company_name);
+
+      payload.company_name = company_name;
+      payload.business_name = company_name;
+      payload.razon_social = company_name;
+      payload.gender_legal = body.gender;
+      payload.document_legal_type = body.legal_document_type;
+      payload.document_legal_number = body.legal_document_number.trim();
+      payload.legal_document_type = body.legal_document_type;
+      payload.legal_document_number = body.legal_document_number.trim();
+    } else {
+      payload.gender = body.gender;
+    }
 
     if (body.date_birth) {
       payload.date_birth = body.date_birth;
