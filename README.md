@@ -30,9 +30,10 @@ Abre [http://localhost:3000](http://localhost:3000).
 | `COBRU_API_URL` | API sandbox Cobru | `https://dev.cobru.co` |
 | `COBRU_PROD_URL` | API producción (categorías) | `https://prod.cobru.co` |
 | `COBRU_BRAND` | Identificador whitelabel | `TRIXEL` |
-| `COBRU_UPLOAD_URL` | Endpoint de subida de archivos | `https://dev.cobru.co/upload/` |
+| `COBRU_HASH_KEY` | Clave HMAC para subida de archivos | valor por defecto de Cobru |
+| `COBRU_UPLOAD_URL` | Endpoint de subida (opcional) | `{COBRU_API_URL}/base/upload_file/` |
 
-> Confirma con tu equipo Cobru el valor de `COBRU_BRAND`, los IDs de documentos y el endpoint de upload vigente antes de producción.
+> No uses la ruta legacy `/upload/` — devuelve 404. Si ya la tienes en Vercel, bórrala o deja que el código use el default.
 
 ## Deploy en Vercel
 

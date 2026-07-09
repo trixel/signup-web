@@ -47,13 +47,13 @@ async function uploadToCobru(
   const file_name = buildUploadFileName(documentNumber, nameSuffix, file.name);
   const sign = getHashKey("documents");
 
-  const formData = new FormData();
-  formData.append("file", file, file.name);
-  formData.append("sign", sign);
-  formData.append("file_type", "documents");
-  formData.append("file_name", file_name);
-
   for (const forceRefresh of [false, true]) {
+    const formData = new FormData();
+    formData.append("file", file, file.name);
+    formData.append("sign", sign);
+    formData.append("file_type", "documents");
+    formData.append("file_name", file_name);
+
     const authHeaders = await getCobruAuthHeaders(forceRefresh);
     const response = await fetch(uploadUrl, {
       method: "POST",
@@ -72,6 +72,12 @@ async function uploadToCobru(
     }
 
     if (!shouldRetryCobruAuth(response.status, data)) {
+      if (response.status === 404) {
+        throw new Error(
+          "El endpoint de subida de Cobru no existe. Quita COBRU_UPLOAD_URL en Vercel o usa /base/upload_file/.",
+        );
+      }
+
       throw new Error(`Error al subir a Cobru (${response.status})`);
     }
 

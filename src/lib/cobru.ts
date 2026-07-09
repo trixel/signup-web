@@ -22,7 +22,24 @@ export function getCobruBrand(): string {
 
 export function getUploadUrl(): string {
   const base = getCobruApiUrl().replace(/\/$/, "");
-  return process.env.COBRU_UPLOAD_URL ?? `${base}/base/upload_file/`;
+  const defaultUrl = `${base}/base/upload_file/`;
+  const configured = process.env.COBRU_UPLOAD_URL?.trim();
+
+  if (!configured) return defaultUrl;
+
+  const normalized = configured.replace(/\/$/, "");
+
+  // Ruta legacy documentada antes — devuelve 404 en Cobru.
+  if (/\/upload$/i.test(normalized)) {
+    try {
+      const { origin } = new URL(normalized);
+      return `${origin}/base/upload_file/`;
+    } catch {
+      return defaultUrl;
+    }
+  }
+
+  return normalized.endsWith("/") ? normalized : `${normalized}/`;
 }
 
 function getNameContext(body: RequestInit["body"]) {
