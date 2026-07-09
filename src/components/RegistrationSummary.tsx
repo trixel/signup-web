@@ -93,10 +93,6 @@ export function RegistrationSummary({
         />
         <SummaryItem label={t("summary.gender")} value={gender} />
         <SummaryItem
-          label={t("summary.phone")}
-          value={`${form.country_code} ${form.phone}`.trim()}
-        />
-        <SummaryItem
           label={t("summary.category")}
           value={categoryName ?? t("common.dash")}
         />
@@ -119,6 +115,14 @@ export function RegistrationSummary({
             }
           />
         ))}
+        <SummaryItem
+          label={t("form.dialCode")}
+          value={form.country_code || t("common.toComplete")}
+        />
+        <SummaryItem
+          label={t("summary.phone")}
+          value={form.phone || t("common.toComplete")}
+        />
         <SummaryItem
           label={t("summary.email")}
           value={form.email || t("common.toComplete")}

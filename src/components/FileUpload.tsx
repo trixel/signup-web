@@ -7,6 +7,8 @@ interface FileUploadProps {
   label: string;
   description: string;
   accept: string;
+  documentNumber: string;
+  nameSuffix: string;
   value?: string;
   onChange: (url: string) => void;
   onClear: () => void;
@@ -16,6 +18,8 @@ export function FileUpload({
   label,
   description,
   accept,
+  documentNumber,
+  nameSuffix,
   value,
   onChange,
   onClear,
@@ -32,6 +36,8 @@ export function FileUpload({
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("document_number", documentNumber);
+    formData.append("name_suffix", nameSuffix);
 
     try {
       const response = await fetch("/api/upload", {

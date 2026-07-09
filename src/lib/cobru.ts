@@ -21,7 +21,8 @@ export function getCobruBrand(): string {
 }
 
 export function getUploadUrl(): string {
-  return process.env.COBRU_UPLOAD_URL ?? `${getCobruApiUrl()}/upload/`;
+  const base = getCobruApiUrl().replace(/\/$/, "");
+  return process.env.COBRU_UPLOAD_URL ?? `${base}/base/upload_file/`;
 }
 
 function getNameContext(body: RequestInit["body"]) {

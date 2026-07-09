@@ -94,6 +94,9 @@ export function RegistrationForm() {
   );
 
   const isCompany = form.type_person === 2;
+  const uploadDocumentNumber = isCompany
+    ? form.legal_document_number
+    : form.document_number;
 
   function translateNameError(code: ReturnType<typeof validateFullName>) {
     if (!code) return null;
@@ -226,7 +229,6 @@ export function RegistrationForm() {
           return t("validation.birthRequired");
         }
         if (!form.date_expiration) return t("validation.issueRequired");
-        if (!form.phone.trim()) return t("validation.phoneRequired");
         if (!form.category) return t("validation.categoryRequired");
         if (!form.subcategory) return t("validation.subcategoryRequired");
         return null;
@@ -249,6 +251,7 @@ export function RegistrationForm() {
         );
         if (nameError) return nameError;
         if (!form.email.trim()) return t("validation.emailRequired");
+        if (!form.phone.trim()) return t("validation.phoneRequired");
         if (!form.password || form.password.length < 8) {
           return t("validation.passwordMin");
         }
@@ -718,25 +721,6 @@ export function RegistrationForm() {
               </>
             )}
 
-            <div className="sm:col-span-2">
-              <FormField label={t("form.phone")} required hint={t("form.phoneHint")}>
-                <div className="flex min-w-0 gap-2">
-                  <CountrySelect
-                    value={form.country_code}
-                    onChange={(dial) => updateForm({ country_code: dial })}
-                  />
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    autoComplete="tel-national"
-                    className={`${inputClassName} min-w-0 flex-1`}
-                    value={form.phone}
-                    onChange={(e) => updateForm({ phone: e.target.value })}
-                    placeholder="3001234567"
-                  />
-                </div>
-              </FormField>
-            </div>
             <FormField label={t("form.category")} required>
               <select
                 className={selectClassName}
@@ -784,6 +768,8 @@ export function RegistrationForm() {
               label={t("form.profilePhoto")}
               description={t("form.profilePhotoDesc")}
               accept="image/*"
+              documentNumber={uploadDocumentNumber}
+              nameSuffix="profile"
               value={form.profile_picture}
               onChange={(url) => updateForm({ profile_picture: url })}
               onClear={() => updateForm({ profile_picture: "" })}
@@ -795,6 +781,8 @@ export function RegistrationForm() {
                 label={t(`documentSlots.${slot.key}.label`)}
                 description={t(`documentSlots.${slot.key}.description`)}
                 accept={slot.accept}
+                documentNumber={uploadDocumentNumber}
+                nameSuffix={slot.key}
                 value={getDocumentUrl(slot.id)}
                 onChange={(url) => setDocument(slot.id, url)}
                 onClear={() => clearDocument(slot.id)}
@@ -810,6 +798,24 @@ export function RegistrationForm() {
               categoryName={categoryName}
               subcategoryName={subcategoryName}
             />
+            <FormField label={t("form.dialCode")} required>
+              <CountrySelect
+                className={selectClassName}
+                value={form.country_code}
+                onChange={(dial) => updateForm({ country_code: dial })}
+              />
+            </FormField>
+            <FormField label={t("form.phone")} required hint={t("form.phoneHint")}>
+              <input
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel-national"
+                className={inputClassName}
+                value={form.phone}
+                onChange={(e) => updateForm({ phone: e.target.value })}
+                placeholder="3001234567"
+              />
+            </FormField>
             <FormField label={t("form.email")} required>
               <input
                 type="email"
