@@ -157,6 +157,7 @@ const es = {
     codeResentPhone: "Código reenviado al celular.",
     accountVerified: "Cuenta verificada",
     accountReady: "Tu cuenta Trixel está lista para operar.",
+    goToPanel: "Ir al panel Trixel",
   },
   validation: {
     NAME_REQUIRED: "El nombre es requerido",
@@ -347,6 +348,7 @@ const en = {
     codeResentPhone: "Code resent to your mobile.",
     accountVerified: "Account verified",
     accountReady: "Your Trixel account is ready to use.",
+    goToPanel: "Go to Trixel panel",
   },
   validation: {
     NAME_REQUIRED: "First name is required",

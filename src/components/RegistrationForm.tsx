@@ -472,6 +472,12 @@ export function RegistrationForm() {
         <p className="mt-2 text-sm text-neutral-600">
           {t("verification.accountReady")}
         </p>
+        <a
+          href="https://panel.trixel.co"
+          className="mt-6 inline-flex border border-black bg-black px-6 py-3 text-sm font-medium text-white transition hover:bg-neutral-800"
+        >
+          {t("verification.goToPanel")}
+        </a>
       </div>
     );
   }
