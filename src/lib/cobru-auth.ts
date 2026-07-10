@@ -133,6 +133,71 @@ export async function getCobruAuthHeaders(
   };
 }
 
+/** Headers con Bearer del usuario (login vía POST /token/). */
+export function getCobruUserAuthHeaders(userAccessToken: string): Record<string, string> {
+  const apiKey = getCobruApiKey();
+  if (!apiKey) {
+    throw new Error(getMissingCobruCredentialsMessage());
+  }
+
+  return {
+    Accept: "application/json",
+    "x-api-key": apiKey,
+    Authorization: `Bearer ${userAccessToken}`,
+  };
+}
+
+/**
+ * Login del usuario recién registrado.
+ * POST {COBRU_API_URL}/token/ con username + password.
+ */
+export async function loginCobruUser(
+  username: string,
+  password: string,
+): Promise<{ access: string; refresh?: string }> {
+  const apiKey = getCobruApiKey();
+  if (!apiKey) {
+    throw new Error(getMissingCobruCredentialsMessage());
+  }
+
+  const baseUrl = (process.env.COBRU_API_URL ?? "https://dev.cobru.co").replace(
+    /\/$/,
+    "",
+  );
+
+  const response = await fetch(`${baseUrl}/token/`, {
+    method: "POST",
+    headers: {
+      "x-api-key": apiKey,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({ username, password }),
+  });
+
+  const data = (await response.json().catch(() => null)) as {
+    access?: string;
+    refresh?: string;
+    detail?: string;
+    message?: string | { detail?: string };
+  };
+
+  if (!response.ok || !data?.access) {
+    const detail =
+      typeof data?.detail === "string"
+        ? data.detail
+        : typeof data?.message === "string"
+          ? data.message
+          : typeof data?.message === "object" && data.message?.detail
+            ? data.message.detail
+            : "No se pudo iniciar sesión del usuario";
+
+    throw new Error(mapCobruAuthError(detail));
+  }
+
+  return { access: data.access, refresh: data.refresh };
+}
+
 export function shouldRetryCobruAuth(
   status: number,
   data: { detail?: string; message?: unknown } | null,

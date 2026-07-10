@@ -77,6 +77,7 @@ export function RegistrationForm() {
     username: string;
     email: string;
   } | null>(null);
+  const [userAccessToken, setUserAccessToken] = useState<string | null>(null);
 
   const [emailCode, setEmailCode] = useState("");
   const [phoneCode, setPhoneCode] = useState("");
@@ -325,10 +326,35 @@ export function RegistrationForm() {
       }
 
       const user = data.message ?? data;
+      const username = typeof user.username === "string" ? user.username : "";
+
+      if (!username) {
+        throw new Error(t("validation.registerError"));
+      }
+
+      const loginResponse = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          password: form.password,
+        }),
+      });
+      const loginData = await loginResponse.json();
+
+      if (!loginResponse.ok || loginData.error || !loginData.access) {
+        throw new Error(
+          typeof loginData.message === "string"
+            ? loginData.message
+            : t("validation.loginAfterRegisterError"),
+        );
+      }
+
       setRegisteredUser({
-        username: user.username,
+        username,
         email: user.email,
       });
+      setUserAccessToken(loginData.access);
       setStep(4);
     } catch (err) {
       setError((err as Error).message);
@@ -342,6 +368,12 @@ export function RegistrationForm() {
     setError(null);
     setResendNotice(null);
 
+    if (!userAccessToken) {
+      setError(t("validation.sessionRequired"));
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/confirmation", {
         method: "POST",
@@ -349,6 +381,7 @@ export function RegistrationForm() {
         body: JSON.stringify({
           phone: target === "both" || target === "phone",
           email: target === "both" || target === "email",
+          access_token: userAccessToken,
         }),
       });
       const data = await response.json();
@@ -380,13 +413,19 @@ export function RegistrationForm() {
     setError(null);
     setResendNotice(null);
 
+    if (!userAccessToken) {
+      setError(t("validation.sessionRequired"));
+      setSubmitting(false);
+      return;
+    }
+
     const code = type === "email" ? parseInt(emailCode, 10) : parseInt(phoneCode, 10);
 
     try {
       const response = await fetch("/api/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, code }),
+        body: JSON.stringify({ type, code, access_token: userAccessToken }),
       });
       const data = await response.json();
 

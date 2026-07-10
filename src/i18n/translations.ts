@@ -179,6 +179,9 @@ const es = {
     passwordMin: "La contraseña debe tener al menos 8 caracteres",
     categoriesLoadError: "No se pudieron cargar las categorías",
     registerError: "Error al crear la cuenta",
+    loginAfterRegisterError:
+      "La cuenta se creó, pero no se pudo iniciar sesión para verificar. Intenta de nuevo.",
+    sessionRequired: "Sesión de verificación no disponible. Vuelve a registrarte.",
     sendCodesError: "Error al enviar códigos",
     invalidCode: "Código inválido",
     uploadError: "Error al subir el archivo",
@@ -366,6 +369,9 @@ const en = {
     passwordMin: "Password must be at least 8 characters",
     categoriesLoadError: "Could not load categories",
     registerError: "Error creating account",
+    loginAfterRegisterError:
+      "Account created, but sign-in for verification failed. Please try again.",
+    sessionRequired: "Verification session unavailable. Please register again.",
     sendCodesError: "Error sending codes",
     invalidCode: "Invalid code",
     uploadError: "Error uploading file",

@@ -1,6 +1,7 @@
 import {
   clearCobruTokenCache,
   getCobruAuthHeaders,
+  getCobruUserAuthHeaders,
   shouldRetryCobruAuth,
 } from "./cobru-auth";
 import { formatCobruError } from "./validation";
@@ -88,6 +89,39 @@ export async function cobruFetch<T>(
   if (!response.ok) {
     throw new Error(
       formatCobruError(data, nameContext) || `Error Cobru (${response.status})`,
+    );
+  }
+
+  return data;
+}
+
+/** Llamadas autenticadas con el Bearer del usuario (verificación email/teléfono). */
+export async function cobruFetchAsUser<T>(
+  path: string,
+  userAccessToken: string,
+  options: RequestInit = {},
+  baseUrl?: string,
+): Promise<T> {
+  const url = `${baseUrl ?? getCobruApiUrl()}${path}`;
+  const authHeaders = getCobruUserAuthHeaders(userAccessToken);
+
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...authHeaders,
+      ...options.headers,
+    },
+  });
+
+  const data = (await response.json().catch(() => null)) as T & {
+    error?: boolean;
+    message?: unknown;
+    detail?: string;
+  };
+
+  if (!response.ok) {
+    throw new Error(
+      formatCobruError(data) || `Error Cobru (${response.status})`,
     );
   }
 
